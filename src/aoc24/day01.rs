@@ -37,8 +37,8 @@ impl Puzzle for Day01 {
     fn part2(self) -> Option<i64> {
         let mut right_frequency = HashMap::new();
         for number in self.right.into_iter() {
-            let entry = right_frequency.entry(number);
-            *entry.or_insert(0) += 1;
+            let count = right_frequency.entry(number).or_insert(0);
+            *count += 1;
         }
 
         Some(
