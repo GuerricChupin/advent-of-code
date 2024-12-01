@@ -1,7 +1,11 @@
 use anyhow::anyhow;
-use aoc_client::{AocClient, PuzzlePart, SubmissionOutcome};
+use aoc_client::{AocClient, SubmissionOutcome};
 
 use clap::Parser as _;
+
+mod aoc24 {
+    pub mod day01;
+}
 
 #[derive(clap::Parser)]
 struct Args {
@@ -15,8 +19,10 @@ struct Args {
     part: i64,
 }
 
-fn answer(year: i32, day: u32, part: PuzzlePart) -> Option<i64> {
+fn answer(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
     match (year, day, part) {
+        (2024, 01, 01) => aoc24::day01::part_1(input),
+        (2024, 01, 02) => aoc24::day01::part_2(input),
         _ => None,
     }
 }
@@ -29,12 +35,9 @@ fn main() -> anyhow::Result<()> {
         .day(args.day)?
         .build()?;
 
-    let part = args
-        .part
-        .try_into()
-        .expect("Not a valid part number {args.part}");
+    let input = client.get_input()?;
 
-    match answer(args.year, args.day, part) {
+    match answer(args.year, args.day, args.part, &input) {
         None => Err(anyhow!(
             "Not able to compute an answer for part {} of day {} of year {}",
             args.part,
