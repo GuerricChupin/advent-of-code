@@ -1,6 +1,7 @@
 pub mod puzzle;
 mod aoc24 {
     pub mod day01;
+    pub mod day02;
 }
 
 use anyhow::anyhow;
@@ -19,11 +20,15 @@ struct Args {
 
     #[arg(short, long)]
     part: i64,
+
+    #[arg(short, long, default_value = "false")]
+    no_submit: bool,
 }
 
 fn puzzle(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
     match (year, day) {
         (2024, 01) => aoc24::day01::Day01::parse(input)?.part(part),
+        (2024, 02) => aoc24::day02::Day02::parse(input)?.part(part),
         _ => None,
     }
 }
@@ -46,12 +51,18 @@ fn main() -> anyhow::Result<()> {
             args.year
         )),
         Some(value) => {
-            let outcome = client.submit_answer(args.part, value)?;
-            match outcome {
-                SubmissionOutcome::Correct => Ok(()),
-                SubmissionOutcome::Incorrect => Err(anyhow!("Incorrect answer")),
-                SubmissionOutcome::Wait => Err(anyhow!("Timeout")),
-                SubmissionOutcome::WrongLevel => Err(anyhow!("Wrong level")),
+            println!("Answer is {value}");
+            if !args.no_submit {
+                let outcome = client.submit_answer(args.part, value)?;
+                match outcome {
+                    SubmissionOutcome::Correct => Ok(()),
+                    SubmissionOutcome::Incorrect => Err(anyhow!("Incorrect answer")),
+                    SubmissionOutcome::Wait => Err(anyhow!("Timeout")),
+                    SubmissionOutcome::WrongLevel => Err(anyhow!("Wrong level")),
+                }
+            } else { 
+                println!("Not submitting");
+                Ok(())
             }
         }
     }
