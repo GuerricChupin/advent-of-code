@@ -3,6 +3,7 @@ mod aoc24 {
     pub mod day01;
     pub mod day02;
     pub mod day03;
+    pub mod day04;
 }
 
 use anyhow::anyhow;
@@ -31,6 +32,7 @@ fn puzzle(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
         (2024, 01) => aoc24::day01::Day01::parse(input)?.part(part),
         (2024, 02) => aoc24::day02::Day02::parse(input)?.part(part),
         (2024, 03) => aoc24::day03::Day03::parse(input)?.part(part),
+        (2024, 04) => aoc24::day04::Day04::parse(input)?.part(part),
         _ => None,
     }
 }
