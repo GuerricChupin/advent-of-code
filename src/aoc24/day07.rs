@@ -37,10 +37,10 @@ struct Equation {
 
 impl Equation {
     fn possible(&self, with_concatenation: bool) -> bool {
-        match self.operands.split_first() {
-            None => false,
-            Some((hd, tl)) => handle_equation(with_concatenation, self.total, *hd, tl),
-        }
+        self.operands
+            .split_first()
+            .map(|(hd, tl)| handle_equation(with_concatenation, self.total, *hd, tl))
+            .unwrap_or(false)
     }
 }
 
