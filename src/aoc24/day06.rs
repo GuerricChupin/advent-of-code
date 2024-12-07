@@ -87,6 +87,33 @@ impl Guard {
     }
 }
 
+enum Status {
+    Leaving,
+    InALoop,
+}
+
+fn run_guard(
+    mut guard: Guard,
+    grid_south_east_corner: Position,
+    obstacles: &HashSet<Position>,
+) -> (Status, HashMap<Position, Direction>) {
+    let mut visited_positions = HashMap::new();
+
+    loop {
+        if !guard.inside(grid_south_east_corner) {
+            break (Status::Leaving, visited_positions);
+        }
+
+        let already_visited = visited_positions.insert(guard.position, guard.direction);
+
+        if already_visited == Some(guard.direction) {
+            break (Status::InALoop, visited_positions);
+        }
+
+        guard = guard.step(obstacles);
+    }
+}
+
 pub struct Day06 {
     initial_guard: Guard,
     obstacles: HashSet<Position>,
@@ -137,47 +164,41 @@ impl Puzzle for Day06 {
     }
 
     fn part1(self) -> Option<i64> {
-        let mut guard = self.initial_guard;
-        let mut visited_positions = HashSet::new();
-
-        while guard.inside(self.grid_south_east_corner) {
-            let _already_visited = visited_positions.insert(guard.position);
-
-            guard = guard.step(&self.obstacles);
-        }
+        let (_final_status, visited_positions) = run_guard(
+            self.initial_guard,
+            self.grid_south_east_corner,
+            &self.obstacles,
+        );
 
         Some(visited_positions.len() as i64)
     }
 
     fn part2(self) -> Option<i64> {
-        let mut guard = self.initial_guard;
-        let mut visited_positions = HashMap::new();
         let mut added_obstacles = 0;
 
-        while guard.inside(self.grid_south_east_corner) {
-            if let Some(previously_visited_direction) = visited_positions.get(&guard.position) {
-                // If the guard was previously on this direction, we have a
-                // chance to place an obstacle, if that obstacle would make the
-                // guard turn in the direction they were facing when they first
-                // visited that tile
-                if &guard.direction.turn() == previously_visited_direction {
-                    let next_position = guard.next_unobstructed_position();
-                    if !visited_positions.contains_key(&next_position) {
-                        // If the next position was not previously visited
-                        // by the guard, we can add an obstacle here to send
-                        // them in a loop. We can't add an obstacle if the
-                        // guard visited that place previously, because that
-                        // would mean that they would have encountered the
-                        // obstacle and so would not have followed the same
-                        // path
+        for x in 0..self.grid_south_east_corner.x {
+            for y in 0..self.grid_south_east_corner.y {
+                let new_obstacle_position = Position { x, y };
 
-                        added_obstacles += 1;
-                    }
+                if !self.obstacles.contains(&new_obstacle_position)
+                    && new_obstacle_position != self.initial_guard.position
+                {
+                    let mut new_obstacles = self.obstacles.clone();
+                    new_obstacles.insert(new_obstacle_position);
+                    let (status, _) = run_guard(
+                        self.initial_guard,
+                        self.grid_south_east_corner,
+                        &new_obstacles,
+                    );
+
+                    match status {
+                        Status::InALoop => {
+                            added_obstacles += 1;
+                        }
+                        Status::Leaving => (),
+                    };
                 }
             }
-
-            let _ = visited_positions.insert(guard.position, guard.direction);
-            guard = guard.step(&self.obstacles);
         }
 
         Some(added_obstacles)
