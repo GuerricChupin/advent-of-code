@@ -97,11 +97,15 @@ impl<'a> Client<'a> {
 }
 
 macro_rules! make_puzzle_runner {
-    ( $( ($year:literal, $day:literal, $day_type:ty) ),* ) => {
+    [ $( ($year:literal, $day:literal, $day_type:ty) ),* ] => {
         fn puzzle_runner(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
         $(
             if year == $year && day == $day {
-                return <$day_type>::parse(input)?.part(part)
+                match part { 
+                    1 => return <$day_type>::parse(input)?.part1(),
+                    2 => return <$day_type>::parse(input)?.part2(),
+                    _ => return None
+                }
             }
         )*
 
@@ -112,7 +116,7 @@ macro_rules! make_puzzle_runner {
 }
 
 // Defines the puzzle_runner function
-make_puzzle_runner!(
+make_puzzle_runner![
     (2024, 01, aoc24::day01::Day01),
     (2024, 02, aoc24::day02::Day02),
     (2024, 03, aoc24::day03::Day03),
@@ -124,7 +128,7 @@ make_puzzle_runner!(
     (2024, 09, aoc24::day09::Day09),
     (2024, 10, aoc24::day10::Day10),
     (2024, 11, aoc24::day11::Day11)
-);
+];
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
