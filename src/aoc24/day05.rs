@@ -19,7 +19,7 @@ impl RulesGraph {
         let mut graph = HashMap::new();
 
         for Rule { before, after } in rules {
-            let direct_children = graph.entry(*before).or_insert_with(|| HashSet::new());
+            let direct_children = graph.entry(*before).or_insert_with(HashSet::new);
             direct_children.insert(*after);
         }
 
@@ -31,7 +31,7 @@ impl RulesGraph {
         // child of before (transitive "childness" is ok, apparently)
         self.graph
             .get(&after)
-            .and_then(|children| Some(!children.contains(&before)))
+            .map(|children| !children.contains(&before))
             .unwrap_or(true)
     }
 
@@ -111,7 +111,7 @@ impl Puzzle for Day05 {
         Some(
             self.pages
                 .into_iter()
-                .filter(|page| graph.correct_page(&page))
+                .filter(|page| graph.correct_page(page))
                 .map(|page| page[page.len() / 2])
                 .sum(),
         )

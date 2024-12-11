@@ -28,7 +28,7 @@ impl Puzzle for Day01 {
         Some(
             self.left
                 .into_iter()
-                .zip(self.right.into_iter())
+                .zip(self.right)
                 .map(|(x, y)| (x - y).abs())
                 .sum(),
         )

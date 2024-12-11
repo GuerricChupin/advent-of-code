@@ -45,7 +45,7 @@ fn make_original_stone_map(stones: Vec<i64>) -> HashMap<i64, i64> {
 }
 
 fn count_all_stones(stones: HashMap<i64, i64>) -> i64 {
-    stones.into_iter().map(|(_, stone_count)| stone_count).sum()
+    stones.into_values().sum()
 }
 
 fn count_stones_after_steps(stones: Vec<i64>, step_count: u32) -> i64 {

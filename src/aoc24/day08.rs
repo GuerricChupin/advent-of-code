@@ -38,7 +38,7 @@ fn pairwise_line_antinodes(
     let unit_diff_vector = {
         let diff_vector = second_station - first_station;
 
-        let gcd = (diff_vector.x.abs() as u64).gcd(diff_vector.y.abs() as u64);
+        let gcd = (diff_vector.x.unsigned_abs()).gcd(diff_vector.y.unsigned_abs());
 
         Position {
             x: diff_vector.x / gcd as i64,
@@ -97,7 +97,7 @@ impl Puzzle for Day08 {
                     '.' => (),
                     c => antennas
                         .entry(c)
-                        .or_insert_with(|| Vec::new())
+                        .or_insert_with(Vec::new)
                         .push(Position { x, y }),
                 }
             }
@@ -113,7 +113,7 @@ impl Puzzle for Day08 {
         let mut antinodes = HashSet::new();
 
         for (_, antennas) in self.antennas.iter() {
-            per_station_antinodes(self.south_east_corner, &mut antinodes, &antennas);
+            per_station_antinodes(self.south_east_corner, &mut antinodes, antennas);
         }
 
         Some(antinodes.len() as i64)
@@ -123,7 +123,7 @@ impl Puzzle for Day08 {
         let mut antinodes = HashSet::new();
 
         for (_, antennas) in self.antennas.iter() {
-            in_line_antinodes(self.south_east_corner, &mut antinodes, &antennas);
+            in_line_antinodes(self.south_east_corner, &mut antinodes, antennas);
         }
 
         Some(antinodes.len() as i64)

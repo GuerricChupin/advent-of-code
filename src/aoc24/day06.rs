@@ -138,7 +138,7 @@ impl Puzzle for Day06 {
                     '^' => match guard {
                         None => {
                             guard = Some(Guard {
-                                position: position,
+                                position,
                                 direction: Direction::Up,
                             })
                         }

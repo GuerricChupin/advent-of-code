@@ -1,12 +1,12 @@
 use crate::puzzle::Puzzle;
 
 fn check_word_against_option<const N: usize>(
-    input: &Vec<Vec<u8>>,
+    input: &[Vec<u8>],
     option: [(usize, usize); N],
     possible_words: &[[u8; N]],
 ) -> bool {
-    possible_words.into_iter().any(|word| {
-        word.into_iter().zip(option).all(|(c, (i, j))| {
+    possible_words.iter().any(|word| {
+        word.iter().zip(option).all(|(c, (i, j))| {
             input
                 .get(i)
                 .and_then(|line| line.get(j))
@@ -16,7 +16,7 @@ fn check_word_against_option<const N: usize>(
     })
 }
 
-fn check_xmas(input: &Vec<Vec<u8>>, i: usize, j: usize) -> i64 {
+fn check_xmas(input: &[Vec<u8>], i: usize, j: usize) -> i64 {
     let horizontal = [(i, j), (i + 1, j), (i + 2, j), (i + 3, j)];
     let vertical = [(i, j), (i, j + 1), (i, j + 2), (i, j + 3)];
     let south_east_diagonal = [(i, j), (i + 1, j + 1), (i + 2, j + 2), (i + 3, j + 3)];
@@ -37,7 +37,7 @@ fn check_xmas(input: &Vec<Vec<u8>>, i: usize, j: usize) -> i64 {
         .count() as i64
 }
 
-fn check_mas(input: &Vec<Vec<u8>>, i: usize, j: usize) -> bool {
+fn check_mas(input: &[Vec<u8>], i: usize, j: usize) -> bool {
     let south_east_diagonal = [(i, j), (i + 1, j + 1), (i + 2, j + 2)];
     let north_east_diagonal = [(i, j + 2), (i + 1, j + 1), (i + 2, j)];
 

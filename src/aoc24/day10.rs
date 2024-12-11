@@ -25,10 +25,9 @@ fn reachable_summits(
                     .filter(|&next_height| next_height == next_height_target)
                     .map(|next_height| (next_position, next_height))
             })
-            .map(|(next_position, next_height)| {
+            .flat_map(|(next_position, next_height)| {
                 reachable_summits(map, next_position, next_height).into_iter()
             })
-            .flatten()
             .collect()
     }
 }

@@ -31,7 +31,7 @@ impl Puzzle for Day02 {
         Some(
             self.reports
                 .into_iter()
-                .filter(|report| is_report_loosely_safe(&report))
+                .filter(|report| is_report_loosely_safe(report))
                 .count() as i64,
         )
     }

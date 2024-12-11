@@ -48,7 +48,7 @@ struct Client<'a> {
     args: &'a Args,
 }
 
-impl<'a> Client<'a> {
+impl Client<'_> {
     fn new(args: &Args) -> Client {
         Client {
             aoc_client: None,
@@ -98,6 +98,7 @@ impl<'a> Client<'a> {
 
 macro_rules! make_puzzle_runner {
     [ $( ($year:literal, $day:literal, $day_type:ty) ),* ] => {
+        #[allow(clippy::zero_prefixed_literal)]
         fn puzzle_runner(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
         $(
             if year == $year && day == $day {
