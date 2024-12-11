@@ -96,22 +96,35 @@ impl<'a> Client<'a> {
     }
 }
 
-fn puzzle(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
-    match (year, day) {
-        (2024, 01) => aoc24::day01::Day01::parse(input)?.part(part),
-        (2024, 02) => aoc24::day02::Day02::parse(input)?.part(part),
-        (2024, 03) => aoc24::day03::Day03::parse(input)?.part(part),
-        (2024, 04) => aoc24::day04::Day04::parse(input)?.part(part),
-        (2024, 05) => aoc24::day05::Day05::parse(input)?.part(part),
-        (2024, 06) => aoc24::day06::Day06::parse(input)?.part(part),
-        (2024, 07) => aoc24::day07::Day07::parse(input)?.part(part),
-        (2024, 08) => aoc24::day08::Day08::parse(input)?.part(part),
-        (2024, 09) => aoc24::day09::Day09::parse(input)?.part(part),
-        (2024, 10) => aoc24::day10::Day10::parse(input)?.part(part),
-        (2024, 11) => aoc24::day11::Day11::parse(input)?.part(part),
-        _ => None,
+macro_rules! make_puzzle_runner {
+    ( $( ($year:literal, $day:literal, $day_type:ty) ),* ) => {
+        fn puzzle_runner(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
+        $(
+            if year == $year && day == $day {
+                return <$day_type>::parse(input)?.part(part)
+            }
+        )*
+
+        None
     }
+
+    };
 }
+
+// Defines the puzzle_runner function
+make_puzzle_runner!(
+    (2024, 01, aoc24::day01::Day01),
+    (2024, 02, aoc24::day02::Day02),
+    (2024, 03, aoc24::day03::Day03),
+    (2024, 04, aoc24::day04::Day04),
+    (2024, 05, aoc24::day05::Day05),
+    (2024, 06, aoc24::day06::Day06),
+    (2024, 07, aoc24::day07::Day07),
+    (2024, 08, aoc24::day08::Day08),
+    (2024, 09, aoc24::day09::Day09),
+    (2024, 10, aoc24::day10::Day10),
+    (2024, 11, aoc24::day11::Day11)
+);
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -120,7 +133,7 @@ fn main() -> anyhow::Result<()> {
 
     let input = client.get_input()?;
 
-    match puzzle(args.year, args.day, args.part, &input) {
+    match puzzle_runner(args.year, args.day, args.part, &input) {
         None => Err(anyhow!(
             "Not able to compute an answer for part {} of day {} of year {}",
             args.part,
