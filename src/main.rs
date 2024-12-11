@@ -10,6 +10,8 @@ mod aoc24 {
     pub mod day07;
     pub mod day08;
     pub mod day09;
+    pub mod day10;
+    pub mod day11;
 }
 
 use std::{fs::read_to_string, path::PathBuf};
@@ -52,6 +54,8 @@ fn puzzle(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
         (2024, 07) => aoc24::day07::Day07::parse(input)?.part(part),
         (2024, 08) => aoc24::day08::Day08::parse(input)?.part(part),
         (2024, 09) => aoc24::day09::Day09::parse(input)?.part(part),
+        (2024, 10) => aoc24::day10::Day10::parse(input)?.part(part),
+        (2024, 11) => aoc24::day11::Day11::parse(input)?.part(part),
         _ => None,
     }
 }
