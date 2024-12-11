@@ -1,5 +1,5 @@
-pub mod puzzle;
 pub mod position;
+pub mod puzzle;
 mod aoc24 {
     pub mod day01;
     pub mod day02;
@@ -14,13 +14,71 @@ mod aoc24 {
     pub mod day11;
 }
 
-use std::{fs::read_to_string, path::PathBuf};
+use std::{
+    fs::read_to_string,
+    path::PathBuf,
+};
 
 use anyhow::anyhow;
-use aoc_client::{AocClient, SubmissionOutcome};
+use aoc_client::AocClient;
 
 use clap::Parser as _;
 use puzzle::Puzzle;
+
+struct Client<'a> {
+    aoc_client: Option<AocClient>,
+    args: &'a Args,
+}
+
+impl<'a> Client<'a> {
+    fn new(args: &Args) -> Client {
+        Client {
+            aoc_client: None,
+            args,
+        }
+    }
+
+    fn get_aoc_client(&mut self) -> anyhow::Result<&AocClient> {
+        match self.aoc_client {
+            None => {
+                let mut client_builder = &mut AocClient::builder();
+                client_builder = match &self.args.cookie_file {
+                    Some(cookie) => client_builder.session_cookie_from_file(cookie)?,
+                    None => client_builder.session_cookie_from_default_locations()?,
+                };
+
+                let client = client_builder
+                    .year(self.args.year)?
+                    .day(self.args.day)?
+                    .build()?;
+
+                self.aoc_client = Some(client);
+
+                Ok(self.aoc_client.as_ref().unwrap())
+            }
+            Some(ref client) => Ok(&client),
+        }
+    }
+
+    fn submit_answer(&mut self, puzzle_part: i64, answer: i64) -> anyhow::Result<()> {
+        if !self.args.no_submit {
+            let client = self.get_aoc_client()?;
+            client.submit_answer_and_show_outcome(puzzle_part, answer)?;
+        }
+
+        Ok(())
+    }
+
+    fn get_input(&mut self) -> anyhow::Result<String> {
+        match &self.args.input_file {
+            None => {
+                let client = self.get_aoc_client()?;
+                Ok(client.get_input()?)
+            }
+            Some(path) => Ok(read_to_string(path)?),
+        }
+    }
+}
 
 #[derive(clap::Parser)]
 struct Args {
@@ -63,19 +121,9 @@ fn puzzle(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
-    let client = {
-        let mut client_builder = &mut AocClient::builder();
-        client_builder = match args.cookie_file {
-            Some(cookie) => client_builder.session_cookie_from_file(cookie)?,
-            None => client_builder.session_cookie_from_default_locations()?,
-        };
-        client_builder.year(args.year)?.day(args.day)?.build()?
-    };
+    let mut client = Client::new(&args);
 
-    let input = match args.input_file {
-        None => client.get_input()?,
-        Some(path) => read_to_string(path)?,
-    };
+    let input = client.get_input()?;
 
     match puzzle(args.year, args.day, args.part, &input) {
         None => Err(anyhow!(
@@ -85,19 +133,8 @@ fn main() -> anyhow::Result<()> {
             args.year
         )),
         Some(value) => {
-            println!("Answer is {value}");
-            if !args.no_submit {
-                let outcome = client.submit_answer(args.part, value)?;
-                match outcome {
-                    SubmissionOutcome::Correct => Ok(()),
-                    SubmissionOutcome::Incorrect => Err(anyhow!("Incorrect answer")),
-                    SubmissionOutcome::Wait => Err(anyhow!("Timeout")),
-                    SubmissionOutcome::WrongLevel => Err(anyhow!("Wrong level")),
-                }
-            } else {
-                println!("Not submitting");
-                Ok(())
-            }
+            client.submit_answer(args.part, value)?;
+            Ok(())
         }
     }
 }
