@@ -14,71 +14,13 @@ mod aoc24 {
     pub mod day11;
 }
 
-use std::{
-    fs::read_to_string,
-    path::PathBuf,
-};
+use std::{fs::read_to_string, path::PathBuf};
 
 use anyhow::anyhow;
 use aoc_client::AocClient;
 
 use clap::Parser as _;
 use puzzle::Puzzle;
-
-struct Client<'a> {
-    aoc_client: Option<AocClient>,
-    args: &'a Args,
-}
-
-impl<'a> Client<'a> {
-    fn new(args: &Args) -> Client {
-        Client {
-            aoc_client: None,
-            args,
-        }
-    }
-
-    fn get_aoc_client(&mut self) -> anyhow::Result<&AocClient> {
-        match self.aoc_client {
-            None => {
-                let mut client_builder = &mut AocClient::builder();
-                client_builder = match &self.args.cookie_file {
-                    Some(cookie) => client_builder.session_cookie_from_file(cookie)?,
-                    None => client_builder.session_cookie_from_default_locations()?,
-                };
-
-                let client = client_builder
-                    .year(self.args.year)?
-                    .day(self.args.day)?
-                    .build()?;
-
-                self.aoc_client = Some(client);
-
-                Ok(self.aoc_client.as_ref().unwrap())
-            }
-            Some(ref client) => Ok(&client),
-        }
-    }
-
-    fn submit_answer(&mut self, puzzle_part: i64, answer: i64) -> anyhow::Result<()> {
-        if !self.args.no_submit {
-            let client = self.get_aoc_client()?;
-            client.submit_answer_and_show_outcome(puzzle_part, answer)?;
-        }
-
-        Ok(())
-    }
-
-    fn get_input(&mut self) -> anyhow::Result<String> {
-        match &self.args.input_file {
-            None => {
-                let client = self.get_aoc_client()?;
-                Ok(client.get_input()?)
-            }
-            Some(path) => Ok(read_to_string(path)?),
-        }
-    }
-}
 
 #[derive(clap::Parser)]
 struct Args {
@@ -94,11 +36,64 @@ struct Args {
     #[arg(short, long, default_value = "false")]
     no_submit: bool,
 
-    #[arg(short, long)]
-    cookie_file: Option<PathBuf>,
+    #[arg(short, long, default_value = ".cookie")]
+    cookie_file: PathBuf,
 
     #[arg(short, long)]
     input_file: Option<PathBuf>,
+}
+
+struct Client<'a> {
+    aoc_client: Option<AocClient>,
+    args: &'a Args,
+}
+
+impl<'a> Client<'a> {
+    fn new(args: &Args) -> Client {
+        Client {
+            aoc_client: None,
+            args,
+        }
+    }
+
+    fn with_aoc_client<T>(
+        &mut self,
+        run: impl FnOnce(&AocClient) -> anyhow::Result<T>,
+    ) -> anyhow::Result<T> {
+        match self.aoc_client {
+            None => {
+                let client = AocClient::builder()
+                    .session_cookie_from_file(&self.args.cookie_file)?
+                    .year(self.args.year)?
+                    .day(self.args.day)?
+                    .build()?;
+
+                let result = run(&client);
+
+                self.aoc_client = Some(client);
+
+                result
+            }
+            Some(ref client) => run(client),
+        }
+    }
+
+    fn submit_answer(&mut self, puzzle_part: i64, answer: i64) -> anyhow::Result<()> {
+        if !self.args.no_submit {
+            self.with_aoc_client(|client| {
+                Ok(client.submit_answer_and_show_outcome(puzzle_part, answer)?)
+            })?
+        }
+
+        Ok(())
+    }
+
+    fn get_input(&mut self) -> anyhow::Result<String> {
+        match &self.args.input_file {
+            None => self.with_aoc_client(|client| Ok(client.get_input()?)),
+            Some(path) => Ok(read_to_string(path)?),
+        }
+    }
 }
 
 fn puzzle(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
