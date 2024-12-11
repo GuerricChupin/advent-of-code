@@ -1,4 +1,5 @@
 pub mod puzzle;
+pub mod position;
 mod aoc24 {
     pub mod day01;
     pub mod day02;

@@ -1,12 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::puzzle::Puzzle;
-
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-struct Position {
-    x: i64,
-    y: i64,
-}
+use crate::{position::Position, puzzle::Puzzle};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Direction {

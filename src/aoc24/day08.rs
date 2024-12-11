@@ -1,40 +1,8 @@
-use std::{
-    collections::{HashMap, HashSet},
-    ops::{Add, Sub},
-};
+use std::collections::{HashMap, HashSet};
 
 use gcd::Gcd as _;
 
-use crate::puzzle::Puzzle;
-
-#[derive(Hash, PartialEq, Eq, Clone, Copy)]
-struct Position {
-    x: i64,
-    y: i64,
-}
-
-impl Add<Position> for Position {
-    type Output = Position;
-
-    fn add(self, rhs: Position) -> Self::Output {
-        Position {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
-
-impl Sub<Position> for Position { 
-    type Output = Position;
-
-    fn sub(self, rhs: Position) -> Self::Output {
-        Position {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
-    }
-
-}
+use crate::{position::Position, puzzle::Puzzle};
 
 impl Position {
     fn in_bounds(self, south_east_corner: Position) -> bool {
