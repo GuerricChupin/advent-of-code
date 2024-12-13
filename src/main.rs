@@ -80,6 +80,8 @@ impl Client<'_> {
     }
 
     fn submit_answer(&mut self, puzzle_part: i64, answer: i64) -> anyhow::Result<()> {
+        println!("Answer is {}", answer);
+        
         if !self.args.no_submit {
             self.with_aoc_client(|client| {
                 Ok(client.submit_answer_and_show_outcome(puzzle_part, answer)?)

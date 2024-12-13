@@ -42,6 +42,17 @@ impl Position {
 
         vectors.map(|diff| self + diff)
     }
+
+    pub fn diagonal_neighbors(self) -> [Self; 4] { 
+        let vectors = [
+            Position { x: 1, y: 1 },
+            Position { x: 1, y: -1 },
+            Position { x: -1, y: -1 },
+            Position { x: -1, y: 1 },
+        ];
+
+        vectors.map(|diff| self + diff)
+    }
 }
 
 pub fn read_map<T>(input: &str, map_element: impl Fn(char) -> T) -> HashMap<Position, T> {
