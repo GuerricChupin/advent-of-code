@@ -13,6 +13,7 @@ mod aoc24 {
     pub mod day10;
     pub mod day11;
     pub mod day12;
+    pub mod day13;
 }
 
 use std::{fs::read_to_string, path::PathBuf};
@@ -81,7 +82,7 @@ impl Client<'_> {
 
     fn submit_answer(&mut self, puzzle_part: i64, answer: i64) -> anyhow::Result<()> {
         println!("Answer is {}", answer);
-        
+
         if !self.args.no_submit {
             self.with_aoc_client(|client| {
                 Ok(client.submit_answer_and_show_outcome(puzzle_part, answer)?)
@@ -132,7 +133,8 @@ make_puzzle_runner![
     (2024, 09, aoc24::day09::Day09),
     (2024, 10, aoc24::day10::Day10),
     (2024, 11, aoc24::day11::Day11),
-    (2024, 12, aoc24::day12::Day12)
+    (2024, 12, aoc24::day12::Day12),
+    (2024, 13, aoc24::day13::Day13)
 ];
 
 fn main() -> anyhow::Result<()> {
