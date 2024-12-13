@@ -12,6 +12,7 @@ mod aoc24 {
     pub mod day09;
     pub mod day10;
     pub mod day11;
+    pub mod day12;
 }
 
 use std::{fs::read_to_string, path::PathBuf};
@@ -60,7 +61,7 @@ impl Client<'_> {
         &mut self,
         run: impl FnOnce(&AocClient) -> anyhow::Result<T>,
     ) -> anyhow::Result<T> {
-        match self.aoc_client {
+        match &self.aoc_client {
             None => {
                 let client = AocClient::builder()
                     .session_cookie_from_file(&self.args.cookie_file)?
@@ -74,7 +75,7 @@ impl Client<'_> {
 
                 result
             }
-            Some(ref client) => run(client),
+            Some(client) => run(client),
         }
     }
 
@@ -128,7 +129,8 @@ make_puzzle_runner![
     (2024, 08, aoc24::day08::Day08),
     (2024, 09, aoc24::day09::Day09),
     (2024, 10, aoc24::day10::Day10),
-    (2024, 11, aoc24::day11::Day11)
+    (2024, 11, aoc24::day11::Day11),
+    (2024, 12, aoc24::day12::Day12)
 ];
 
 fn main() -> anyhow::Result<()> {

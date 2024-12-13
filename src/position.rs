@@ -1,4 +1,7 @@
-use std::ops::{Add, Sub};
+use std::{
+    collections::HashMap,
+    ops::{Add, Sub},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Position {
@@ -39,4 +42,21 @@ impl Position {
 
         vectors.map(|diff| self + diff)
     }
+}
+
+pub fn read_map<T>(input: &str, map_element: impl Fn(char) -> T) -> HashMap<Position, T> {
+    let mut map = HashMap::new();
+
+    for (y, line) in input.lines().enumerate() {
+        for (x, c) in line.chars().enumerate() {
+            let pt = Position {
+                x: x as i64,
+                y: y as i64,
+            };
+
+            map.insert(pt, map_element(c));
+        }
+    }
+
+    map
 }
