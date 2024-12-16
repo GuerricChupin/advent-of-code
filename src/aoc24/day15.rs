@@ -1,67 +1,41 @@
 use std::collections::HashSet;
 
-use crate::{position::Position, puzzle::Puzzle};
+use crate::{
+    position::{Direction, Position},
+    puzzle::Puzzle,
+};
 
-#[derive(Clone, Copy)]
-enum Instruction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
+fn execute(
+    direction: Direction,
+    walls: &HashSet<Position>,
+    objects: &mut HashSet<Position>,
+    robot: &mut Position,
+) {
+    let dv = direction.delta();
 
-impl Instruction {
-    fn move_direction(self) -> Position { 
-        match self {
-            Instruction::Up => Position { x: 0, y: -1 },
-            Instruction::Down => Position { x: 0, y: 1 },
-            Instruction::Left => Position { x: -1, y: 0 },
-            Instruction::Right => Position { x: 1, y: 0 },
+    let mut line_of_object = Vec::new();
+
+    let mut neighbour = *robot + dv;
+    loop {
+        if walls.contains(&neighbour) {
+            return;
         }
+
+        if objects.contains(&neighbour) {
+            line_of_object.push(neighbour);
+        } else {
+            break;
+        }
+
+        neighbour = neighbour + dv;
     }
 
-    // fn has_neighbour(self, position: Position, obstacles: &HashSet<Position>) -> Option<Position> {
-    //     let possible_neighbour = self.move_direction() + position; 
-
-    //     if obstacles.contains(&possible_neighbour) {
-    //         Some(possible_neighbour)
-    //     } else {
-    //         None
-    //     }
-    // }
-
-    fn execute(
-        self,
-        walls: &HashSet<Position>,
-        objects: &mut HashSet<Position>,
-        robot: &mut Position,
-    ) {
-        let dv = self.move_direction();
-
-        let mut line_of_object = Vec::new();
-
-        let mut neighbour = *robot + dv;
-        loop {
-            if walls.contains(&neighbour) {
-                return;
-            }
-
-            if objects.contains(&neighbour) {
-                line_of_object.push(neighbour);
-            } else {
-                break;
-            }
-
-            neighbour = neighbour + dv;
-        }
-
-        *robot = *robot + dv;
-        for &neighbour in line_of_object.iter() {
-            let _ = objects.remove(&neighbour);
-        }
-        for neighbour in line_of_object.into_iter() {
-            let _ = objects.insert(neighbour + dv);
-        }
+    *robot = *robot + dv;
+    for &neighbour in line_of_object.iter() {
+        let _ = objects.remove(&neighbour);
+    }
+    for neighbour in line_of_object.into_iter() {
+        let _ = objects.insert(neighbour + dv);
     }
 }
 
@@ -75,7 +49,7 @@ pub struct Day15 {
 
     initial_robot_position: Position,
 
-    instruction_tape: Vec<Instruction>,
+    instruction_tape: Vec<Direction>,
 }
 
 impl Puzzle for Day15 {
@@ -115,10 +89,10 @@ impl Puzzle for Day15 {
         let instruction_tape = instructions
             .chars()
             .filter_map(|c| match c {
-                '^' => Some(Instruction::Up),
-                'v' => Some(Instruction::Down),
-                '<' => Some(Instruction::Left),
-                '>' => Some(Instruction::Right),
+                '^' => Some(Direction::Up),
+                'v' => Some(Direction::Down),
+                '<' => Some(Direction::Left),
+                '>' => Some(Direction::Right),
                 _ => None,
             })
             .collect::<Vec<_>>();
@@ -137,7 +111,7 @@ impl Puzzle for Day15 {
         let walls = self.walls;
 
         for instruction in self.instruction_tape.into_iter() {
-            instruction.execute(&walls, &mut objects, &mut robot);
+            execute(instruction, &walls, &mut objects, &mut robot);
         }
 
         Some(objects.into_iter().map(|pos| gps_coord(pos)).sum())

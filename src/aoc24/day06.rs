@@ -1,25 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{position::Position, puzzle::Puzzle};
+use crate::{position::{Direction, Position}, puzzle::Puzzle};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Direction {
-    fn turn(self) -> Self {
-        match self {
-            Direction::Up => Direction::Right,
-            Direction::Down => Direction::Left,
-            Direction::Left => Direction::Up,
-            Direction::Right => Direction::Down,
-        }
-    }
-}
 
 #[derive(Clone, Copy)]
 struct Guard {
@@ -39,7 +21,7 @@ impl Guard {
 
     fn turn(self) -> Self {
         Guard {
-            direction: self.direction.turn(),
+            direction: self.direction.next_clockwise(),
             ..self
         }
     }
