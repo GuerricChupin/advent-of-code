@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    ops::{Add, Sub},
-};
+use std::ops::{Add, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Direction {
@@ -112,9 +109,7 @@ impl Position {
     }
 }
 
-pub fn read_map<T>(input: &str, map_element: impl Fn(char) -> T) -> HashMap<Position, T> {
-    let mut map = HashMap::new();
-
+pub fn read_map(input: &str, mut map_element: impl FnMut(Position, char)) {
     for (y, line) in input.lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
             let pt = Position {
@@ -122,9 +117,7 @@ pub fn read_map<T>(input: &str, map_element: impl Fn(char) -> T) -> HashMap<Posi
                 y: y as i64,
             };
 
-            map.insert(pt, map_element(c));
+            map_element(pt, c);
         }
     }
-
-    map
 }

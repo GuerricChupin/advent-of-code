@@ -190,9 +190,13 @@ pub struct Day12 {
 
 impl Puzzle for Day12 {
     fn parse(input: &str) -> Option<Self> {
-        Some(Day12 {
-            map: read_map(input, |c| c),
-        })
+        let mut map = HashMap::new();
+
+        read_map(input, |pos, c| {
+            let _ = map.insert(pos, c);
+        });
+
+        Some(Day12 { map })
     }
 
     fn part1(mut self) -> Option<i64> {

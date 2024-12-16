@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::{
-    position::{Direction, Position},
+    position::{read_map, Direction, Position},
     puzzle::Puzzle,
 };
 
@@ -102,30 +102,21 @@ impl Puzzle for Day16 {
         let mut deer = None;
         let mut end = None;
 
-        for (y, line) in input.lines().enumerate() {
-            for (x, c) in line.chars().enumerate() {
-                let pos = Position {
-                    x: x as i64,
-                    y: y as i64,
-                };
-
-                match c {
-                    '#' => {
-                        let _already_inserted = walls.insert(pos);
-                    }
-                    'E' => {
-                        end = Some(pos);
-                    }
-                    'S' => {
-                        deer = Some(Deer {
-                            position: pos,
-                            direction: Direction::Right,
-                        });
-                    }
-                    _ => (),
-                }
+        read_map(input, |pos, c| match c {
+            '#' => {
+                let _already_inserted = walls.insert(pos);
             }
-        }
+            'E' => {
+                end = Some(pos);
+            }
+            'S' => {
+                deer = Some(Deer {
+                    position: pos,
+                    direction: Direction::Right,
+                });
+            }
+            _ => (),
+        });
 
         let deer = deer?;
         let end = end?;
@@ -180,13 +171,12 @@ impl Puzzle for Day16 {
         while let Some((deer, score)) = left_to_visit.pop_front() {
             best_path.insert(deer.position);
             let previous_neighbours = deer.previous();
-            let previous_neighbours_on_the_best_path =
-                previous_neighbours
-                    .into_iter()
-                    .map(|(other, delta_score)| (other, score + delta_score))
-                    .filter(|(other, expected_score)| {
-                        visited.get(&other).cloned() == Some(*expected_score)
-                    });
+            let previous_neighbours_on_the_best_path = previous_neighbours
+                .into_iter()
+                .map(|(other, delta_score)| (other, score + delta_score))
+                .filter(|(other, expected_score)| {
+                    visited.get(&other).cloned() == Some(*expected_score)
+                });
             left_to_visit.extend(previous_neighbours_on_the_best_path);
         }
 
