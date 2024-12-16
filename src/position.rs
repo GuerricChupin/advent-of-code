@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Sub},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Position {
     pub x: i64,
     pub y: i64,
