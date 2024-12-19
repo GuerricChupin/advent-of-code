@@ -7,6 +7,8 @@ pub struct Day03 {
 }
 
 impl Puzzle for Day03 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         Some(Day03 {
             input: String::from(input),

@@ -81,6 +81,8 @@ pub struct Day08 {
 }
 
 impl Puzzle for Day08 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let mut south_east_corner = Position { x: 0, y: 0 };
         let mut antennas = HashMap::new();

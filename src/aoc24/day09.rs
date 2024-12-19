@@ -151,6 +151,8 @@ pub struct Day09 {
 }
 
 impl Puzzle for Day09 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         Some(Day09 {
             disk_map: input

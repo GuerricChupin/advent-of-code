@@ -97,6 +97,8 @@ pub struct Day06 {
 }
 
 impl Puzzle for Day06 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let mut guard = None;
         let mut obstacles = HashSet::new();

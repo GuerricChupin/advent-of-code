@@ -55,6 +55,8 @@ pub struct Day04 {
 }
 
 impl Puzzle for Day04 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         Some(Day04 {
             input: input

@@ -52,6 +52,8 @@ pub struct Day13 {
 }
 
 impl Puzzle for Day13 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let button_regex = Regex::new(r"Button (A|B): X\+(?<x>\d+), Y\+(?<y>\d+)").unwrap();
         let prize_regex = Regex::new(r"Prize: X=(?<x>\d+), Y=(?<y>\d+)").unwrap();

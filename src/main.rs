@@ -17,6 +17,7 @@ mod aoc24 {
     pub mod day14;
     pub mod day15;
     pub mod day16;
+    pub mod day17;
 }
 
 use std::{fs::read_to_string, path::PathBuf};
@@ -83,7 +84,7 @@ impl Client<'_> {
         }
     }
 
-    fn submit_answer(&mut self, puzzle_part: i64, answer: i64) -> anyhow::Result<()> {
+    fn submit_answer(&mut self, puzzle_part: i64, answer: impl std::fmt::Display) -> anyhow::Result<()> {
         println!("Answer is {}", answer);
 
         if !self.args.no_submit {
@@ -106,12 +107,12 @@ impl Client<'_> {
 macro_rules! make_puzzle_runner {
     [ $( ($year:literal, $day:literal, $day_type:ty) ),* ] => {
         #[allow(clippy::zero_prefixed_literal)]
-        fn puzzle_runner(year: i32, day: u32, part: i64, input: &str) -> Option<i64> {
+        fn puzzle_runner(year: i32, day: u32, part: i64, input: &str) -> Option<Box<dyn std::fmt::Display>> {
         $(
             if year == $year && day == $day {
-                match part { 
-                    1 => return <$day_type>::parse(input)?.part1(),
-                    2 => return <$day_type>::parse(input)?.part2(),
+                match part {
+                    1 => return Some(Box::new(<$day_type>::parse(input)?.part1()?)),
+                    2 => return Some(Box::new(<$day_type>::parse(input)?.part2()?)),
                     _ => return None
                 }
             }
@@ -140,7 +141,8 @@ make_puzzle_runner![
     (2024, 13, aoc24::day13::Day13),
     (2024, 14, aoc24::day14::Day14),
     (2024, 15, aoc24::day15::Day15),
-    (2024, 16, aoc24::day16::Day16)
+    (2024, 16, aoc24::day16::Day16),
+    (2024, 17, aoc24::day17::Day17)
 ];
 
 fn main() -> anyhow::Result<()> {

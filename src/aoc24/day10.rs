@@ -57,6 +57,8 @@ fn count_all_paths(
 }
 
 impl Puzzle for Day10 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let mut map = HashMap::new();
 

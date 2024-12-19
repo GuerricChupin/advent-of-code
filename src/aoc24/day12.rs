@@ -189,6 +189,8 @@ pub struct Day12 {
 }
 
 impl Puzzle for Day12 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let mut map = HashMap::new();
 

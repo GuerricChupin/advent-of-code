@@ -49,6 +49,8 @@ pub struct Day07 {
 }
 
 impl Puzzle for Day07 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let equations = input
             .lines()

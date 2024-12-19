@@ -77,6 +77,8 @@ pub struct Day05 {
 }
 
 impl Puzzle for Day05 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let (rules_input, pages_input) = input.split_once("\n\n")?;
         let rule_regex = Regex::new(r"(\d+)\|(\d+)").unwrap();

@@ -8,6 +8,8 @@ pub struct Day01 {
 }
 
 impl Puzzle for Day01 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let mut left = Vec::new();
         let mut right = Vec::new();

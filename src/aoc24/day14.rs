@@ -93,6 +93,8 @@ pub struct Day14 {
 }
 
 impl Puzzle for Day14 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let re = Regex::new(r"p=(?<x>\-?\d+),(?<y>\-?\d+) v=(?<vx>\-?\d+),(?<vy>\-?\d+)").unwrap();
 

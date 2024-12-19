@@ -5,6 +5,8 @@ pub struct Day02 {
 }
 
 impl Puzzle for Day02 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         Some(Day02 {
             reports: input

@@ -53,6 +53,8 @@ pub struct Day15 {
 }
 
 impl Puzzle for Day15 {
+    type Output = i64;
+    
     fn parse(input: &str) -> Option<Self> {
         let mut split_input = input.split("\n\n");
         let grid = split_input.next()?;
