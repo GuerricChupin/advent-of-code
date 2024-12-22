@@ -75,7 +75,7 @@ impl Board {
         // Reddit threads), it is alsways better to go left first, then use of
         // the middle keys (up/down), then right, if possible. That means that,
         // if possible, we should go horizontal then vertical first if we are
-        // going left, vertical then horizontal in all other cases. 
+        // going left, vertical then horizontal in all other cases.
         let possibilities = if dx < 0 {
             [horizontal_then_vertical, vertical_then_horizontal]
         } else {
@@ -163,7 +163,7 @@ impl ArrowKey {
         }
     }
 
-    fn display(self) -> char {
+    fn _display(self) -> char {
         match self {
             ArrowKey::A => 'A',
             ArrowKey::Direction(Direction::Up) => '^',
@@ -185,7 +185,6 @@ fn compute_door_solution(code: &[NumericKey], robots_involved: usize) -> i64 {
             .map(|key| key.position())
             .collect::<Vec<_>>();
         path = ARROW_BOARD.make_path(&mut ArrowKey::A.position(), &positions);
-        println!("{} {}", _robot_id, path.len());
     }
 
     numeric_code(&code) * path.len() as i64
