@@ -123,7 +123,6 @@ impl Puzzle for Day22 {
                 .collect::<Vec<_>>();
 
             let window = rank_all_windows(&prices);
-            // println!("{} {:?}", secret, window);
 
             merge_windows(&mut bananas_per_window, window);
         }
