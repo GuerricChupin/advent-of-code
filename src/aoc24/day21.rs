@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     position::{Direction, Position},
     puzzle::Puzzle,
@@ -17,10 +19,6 @@ const NUMERIC_KEYPAD: [Position; 11] = [
     Position { x: 0, y: 0 },   // A
 ];
 
-const NUMERIC_BOARD: Board = Board {
-    board: &NUMERIC_KEYPAD,
-};
-
 const ARROW_KEYPAD: [Position; 5] = [
     Position { x: 0, y: 0 },  // A
     Position { x: -1, y: 0 }, // ^
@@ -29,12 +27,10 @@ const ARROW_KEYPAD: [Position; 5] = [
     Position { x: -2, y: 1 }, // <
 ];
 
-const ARROW_BOARD: Board = Board {
-    board: &ARROW_KEYPAD,
-};
-
+#[derive(Clone)]
 struct Board {
     board: &'static [Position],
+    cache: HashMap<(Position, Position), Vec<Direction>>,
 }
 
 impl Board {
@@ -42,65 +38,79 @@ impl Board {
         self.board.contains(&position)
     }
 
-    fn move_to(&self, start: Position, end: Position) -> Vec<Direction> {
-        let Position { x: dx, y: dy } = end - start;
+    fn move_to(&mut self, start: Position, end: Position) -> Vec<Direction> {
+        match self.cache.get(&(start, end)) {
+            None => {
+                let Position { x: dx, y: dy } = end - start;
 
-        // Yes it looks in reverse because in my lib, y goes down
-        let vertical_direction = if dy < 0 {
-            Direction::Up
-        } else {
-            Direction::Down
-        };
-        let horizontal_direction = if dx < 0 {
-            Direction::Left
-        } else {
-            Direction::Right
-        };
+                // Yes it looks in reverse because in my lib, y goes down
+                let vertical_direction = if dy < 0 {
+                    Direction::Up
+                } else {
+                    Direction::Down
+                };
+                let horizontal_direction = if dx < 0 {
+                    Direction::Left
+                } else {
+                    Direction::Right
+                };
 
-        // We forbid any zigzaging, so we'll either go in the vertical direction
-        // all the way first, and then in the horizontal direction or vice-versa
+                // We forbid any zigzaging, so we'll either go in the vertical direction
+                // all the way first, and then in the horizontal direction or vice-versa
 
-        let vertical_then_horizontal = Vec::from_iter(
-            std::iter::repeat(vertical_direction)
-                .take(dy.unsigned_abs() as usize)
-                .chain(std::iter::repeat(horizontal_direction).take(dx.unsigned_abs() as usize)),
-        );
-        let horizontal_then_vertical = Vec::from_iter(
-            std::iter::repeat(horizontal_direction)
-                .take(dx.unsigned_abs() as usize)
-                .chain(std::iter::repeat(vertical_direction).take(dy.unsigned_abs() as usize)),
-        );
+                let vertical_then_horizontal = Vec::from_iter(
+                    std::iter::repeat(vertical_direction)
+                        .take(dy.unsigned_abs() as usize)
+                        .chain(
+                            std::iter::repeat(horizontal_direction)
+                                .take(dx.unsigned_abs() as usize),
+                        ),
+                );
+                let horizontal_then_vertical = Vec::from_iter(
+                    std::iter::repeat(horizontal_direction)
+                        .take(dx.unsigned_abs() as usize)
+                        .chain(
+                            std::iter::repeat(vertical_direction).take(dy.unsigned_abs() as usize),
+                        ),
+                );
 
-        // We will select the optimal sequence of moves. Empirically (see some
-        // Reddit threads), it is alsways better to go left first, then use of
-        // the middle keys (up/down), then right, if possible. That means that,
-        // if possible, we should go horizontal then vertical first if we are
-        // going left, vertical then horizontal in all other cases.
-        let possibilities = if dx < 0 {
-            [horizontal_then_vertical, vertical_then_horizontal]
-        } else {
-            [vertical_then_horizontal, horizontal_then_vertical]
-        };
+                // We will select the optimal sequence of moves. Empirically (see some
+                // Reddit threads), it is alsways better to go left first, then use of
+                // the middle keys (up/down), then right, if possible. That means that,
+                // if possible, we should go horizontal then vertical first if we are
+                // going left, vertical then horizontal in all other cases.
+                let possibilities = if dx < 0 {
+                    [horizontal_then_vertical, vertical_then_horizontal]
+                } else {
+                    [vertical_then_horizontal, horizontal_then_vertical]
+                };
 
-        possibilities
-            .into_iter()
-            .filter(|moves| {
-                let mut position = start;
-                for dir in moves.iter() {
-                    position = position + dir.delta();
+                let result = possibilities
+                    .into_iter()
+                    .filter(|moves| {
+                        let mut position = start;
+                        for dir in moves.iter() {
+                            position = position + dir.delta();
 
-                    if !self.inside(position) {
-                        return false;
-                    }
-                }
+                            if !self.inside(position) {
+                                return false;
+                            }
+                        }
 
-                true
-            })
-            .next()
-            .unwrap()
+                        true
+                    })
+                    .next()
+                    .unwrap();
+
+                self.cache.insert((start, end), result.clone());
+
+                result
+            }
+            Some(moves) => moves.clone(),
+        }
     }
 
-    fn make_path(&self, start: &mut Position, positions: &[Position]) -> Vec<ArrowKey> {
+    fn make_path(&mut self, start: &mut Position, positions: &[Position]) -> Vec<ArrowKey> {
         let mut moves = Vec::new();
 
         for position in positions {
@@ -146,7 +156,7 @@ fn numeric_code(keys: &[NumericKey]) -> i64 {
         .sum()
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum ArrowKey {
     A,
     Direction(Direction),
@@ -174,20 +184,59 @@ impl ArrowKey {
     }
 }
 
-fn compute_door_solution(code: &[NumericKey], robots_involved: usize) -> i64 {
+fn robot(
+    mut arrow_board: Board,
+    mut sequence: impl Iterator<Item = ArrowKey>,
+) -> impl Iterator<Item = Vec<ArrowKey>> {
+    let mut current_key = ArrowKey::A;
+
+    std::iter::from_fn(move || {
+        let next_key = sequence.next()?;
+
+        let moves = arrow_board.move_to(current_key.position(), next_key.position());
+        current_key = next_key;
+
+        let key_sequence = moves
+            .into_iter()
+            .map(|dir| ArrowKey::Direction(dir))
+            .chain(std::iter::once(ArrowKey::A))
+            .collect::<Vec<_>>();
+
+        Some(key_sequence)
+    })
+}
+
+fn robot_stack(
+    arrow_board: Board,
+    sequence: Box<dyn Iterator<Item = ArrowKey>>,
+    robots_involved: usize,
+) -> Box<dyn Iterator<Item = ArrowKey>> {
+    if robots_involved <= 1 {
+        Box::new(sequence)
+    } else {
+        let robot = Box::new(robot(arrow_board.clone(), sequence).flatten());
+        robot_stack(arrow_board, robot, robots_involved - 1)
+    }
+}
+
+fn compute_door_solution(
+    mut numeric_board: Board,
+    arrow_board: Board,
+    code: &[NumericKey],
+    robots_involved: usize,
+) -> i64 {
     let pad_positions = code.iter().map(|key| key.position()).collect::<Vec<_>>();
 
-    let mut path = NUMERIC_BOARD.make_path(&mut NumericKey::A.position(), &pad_positions);
+    let initial_sequence = numeric_board.make_path(&mut NumericKey::A.position(), &pad_positions);
 
-    for _robot_id in 1..robots_involved {
-        let positions = path
-            .into_iter()
-            .map(|key| key.position())
-            .collect::<Vec<_>>();
-        path = ARROW_BOARD.make_path(&mut ArrowKey::A.position(), &positions);
-    }
+    let final_sequence_length = robot_stack(
+        arrow_board,
+        Box::new(initial_sequence.into_iter()),
+        robots_involved,
+    )
+    .count() as i64;
 
-    numeric_code(&code) * path.len() as i64
+    numeric_code(&code) * final_sequence_length
 }
 
 pub struct Day21 {
@@ -214,20 +263,42 @@ impl Puzzle for Day21 {
     }
 
     fn part1(self) -> Option<Self::Output> {
-        Some(
-            self.door_codes
-                .into_iter()
-                .map(|code| compute_door_solution(&code, 3))
-                .sum(),
-        )
+        let numeric_board = Board {
+            board: &NUMERIC_KEYPAD,
+            cache: HashMap::new(),
+        };
+
+        let arrow_board = Board {
+            board: &ARROW_KEYPAD,
+            cache: HashMap::new(),
+        };
+
+        let mut result = 0;
+
+        for code in self.door_codes.into_iter() {
+            result += compute_door_solution(numeric_board.clone(), arrow_board.clone(), &code, 3);
+        }
+
+        Some(result)
     }
 
     fn part2(self) -> Option<Self::Output> {
-        Some(
-            self.door_codes
-                .into_iter()
-                .map(|code| compute_door_solution(&code, 25))
-                .sum(),
-        )
+        let numeric_board = Board {
+            board: &NUMERIC_KEYPAD,
+            cache: HashMap::new(),
+        };
+
+        let arrow_board = Board {
+            board: &ARROW_KEYPAD,
+            cache: HashMap::new(),
+        };
+
+        let mut result = 0;
+
+        for code in self.door_codes.into_iter() {
+            result += compute_door_solution(numeric_board.clone(), arrow_board.clone(), &code, 25);
+        }
+
+        Some(result)
     }
 }
