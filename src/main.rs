@@ -22,6 +22,7 @@ mod aoc24 {
     pub mod day18;
     pub mod day20;
     pub mod day21;
+    pub mod day22;
 }
 
 use std::{fs::read_to_string, path::PathBuf};
@@ -150,7 +151,8 @@ make_puzzle_runner![
     (2024, 18, aoc24::day18::Day18),
     (2024, 19, aoc24::day19::Day19),
     (2024, 20, aoc24::day20::Day20),
-    (2024, 21, aoc24::day21::Day21)
+    (2024, 21, aoc24::day21::Day21),
+    (2024, 22, aoc24::day22::Day22)
 ];
 
 fn main() -> anyhow::Result<()> {
