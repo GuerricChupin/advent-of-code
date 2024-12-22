@@ -1,45 +1,121 @@
-use crate::{position::{Direction, Position}, puzzle::Puzzle};
+use crate::{
+    position::{Direction, Position},
+    puzzle::Puzzle,
+};
 
 const NUMERIC_KEYPAD: [Position; 11] = [
-    Position { x: -1, y: 0 }, // 0
-    Position { x: 0, y:  0}, // A 
-
-    Position { x: -2, y:  1}, // 1 
-    Position { x: -1, y:  1}, // 2 
-    Position { x: 0, y:  1}, // 3 
-
-    Position { x: -2, y:  2}, // 4 
-    Position { x: -1, y:  2}, // 5 
-    Position { x: 0, y:  2}, // 6
-
-    Position { x: -2, y:  3}, // 7 
-    Position { x: -1, y:  3}, // 8 
-    Position { x: 0, y:  3}, // 9
+    Position { x: -1, y: 0 },  // 0
+    Position { x: -2, y: -1 }, // 1
+    Position { x: -1, y: -1 }, // 2
+    Position { x: 0, y: -1 },  // 3
+    Position { x: -2, y: -2 }, // 4
+    Position { x: -1, y: -2 }, // 5
+    Position { x: 0, y: -2 },  // 6
+    Position { x: -2, y: -3 }, // 7
+    Position { x: -1, y: -3 }, // 8
+    Position { x: 0, y: -3 },  // 9
+    Position { x: 0, y: 0 },   // A
 ];
+
+const NUMERIC_BOARD: Board = Board {
+    board: &NUMERIC_KEYPAD,
+};
 
 const ARROW_KEYPAD: [Position; 5] = [
-    Position { x: 0, y: 0 }, // A 
-    Position { x: -1, y: 0}, // ^ 
-
-    Position {x: 0, y: -1 }, // > 
-    Position {x: -1, y:-1}, // v 
-    Position {x: -2, y: -1}, // <
+    Position { x: 0, y: 0 },  // A
+    Position { x: -1, y: 0 }, // ^
+    Position { x: 0, y: 1 },  // >
+    Position { x: -1, y: 1 }, // v
+    Position { x: -2, y: 1 }, // <
 ];
 
-struct Board {
-    board: &'static [Position], 
-}
+const ARROW_BOARD: Board = Board {
+    board: &ARROW_KEYPAD,
+};
 
+struct Board {
+    board: &'static [Position],
+}
 
 impl Board {
     fn inside(&self, position: Position) -> bool {
         self.board.contains(&position)
     }
 
-    fn move_on_by(&self, current_position: &mut Position, move_by: Position) -> Vec<Direction> {
+    fn move_to(&self, start: Position, end: Position) -> Vec<Direction> {
+        let Position { x: dx, y: dy } = end - start;
+
+        // Yes it looks in reverse because in my lib, y goes down
+        let vertical_direction = if dy < 0 {
+            Direction::Up
+        } else {
+            Direction::Down
+        };
+        let horizontal_direction = if dx < 0 {
+            Direction::Left
+        } else {
+            Direction::Right
+        };
+
+        // We forbid any zigzaging, so we'll either go in the vertical direction
+        // all the way first, and then in the horizontal direction or vice-versa
+
+        let vertical_then_horizontal = Vec::from_iter(
+            std::iter::repeat(vertical_direction)
+                .take(dy.unsigned_abs() as usize)
+                .chain(std::iter::repeat(horizontal_direction).take(dx.unsigned_abs() as usize)),
+        );
+        let horizontal_then_vertical = Vec::from_iter(
+            std::iter::repeat(horizontal_direction)
+                .take(dx.unsigned_abs() as usize)
+                .chain(std::iter::repeat(vertical_direction).take(dy.unsigned_abs() as usize)),
+        );
+
+        // We will select the optimal sequence of moves. Empirically (see some
+        // Reddit threads), it is alsways better to go left first, then use of
+        // the middle keys (up/down), then right, if possible. That means that,
+        // if possible, we should go horizontal then vertical first if we are
+        // going left, vertical then horizontal in all other cases. 
+        let possibilities = if dx < 0 {
+            [horizontal_then_vertical, vertical_then_horizontal]
+        } else {
+            [vertical_then_horizontal, horizontal_then_vertical]
+        };
+
+        possibilities
+            .into_iter()
+            .filter(|moves| {
+                let mut position = start;
+                for dir in moves.iter() {
+                    position = position + dir.delta();
+
+                    if !self.inside(position) {
+                        return false;
+                    }
+                }
+
+                true
+            })
+            .next()
+            .unwrap()
+    }
+
+    fn make_path(&self, start: &mut Position, positions: &[Position]) -> Vec<ArrowKey> {
         let mut moves = Vec::new();
 
+        for position in positions {
+            let path_chunk = self.move_to(*start, *position);
+            moves.extend(
+                path_chunk
+                    .into_iter()
+                    .map(|arrow| ArrowKey::Direction(arrow))
+                    .chain(std::iter::once(ArrowKey::A)),
+            );
 
+            *start = *position;
+        }
+
+        moves
     }
 }
 
@@ -50,53 +126,12 @@ enum NumericKey {
 }
 
 impl NumericKey {
-    fn optimal(self) -> Vec<ArrowKey> {
-        match self {
-            NumericKey::A => vec![],
-            NumericKey::Num(0) => vec![ArrowKey::Left],
-            NumericKey::Num(1) => vec![ArrowKey::Up, ArrowKey::Left, ArrowKey::Left],
-            NumericKey::Num(2) => vec![ArrowKey::Up, ArrowKey::Left],
-        }
-    }
     fn position(self) -> Position {
         match self {
-            // We arbitrarily decide that key 1 is at 0,0, with other keys
-            // having increasing x,y coordinates
-            NumericKey::Num(0) => Position { x: 1, y: -1 },
-            NumericKey::Num(n) => Position {
-                x: (i64::from(n) - 1) % 3,
-                y: (i64::from(n) - 1) / 3,
-            },
-            NumericKey::A => Position { x: 2, y: -1 },
+            NumericKey::Num(n) => NUMERIC_KEYPAD[usize::from(n)],
+            NumericKey::A => NUMERIC_KEYPAD[10],
         }
     }
-
-    fn safe(position: Position) -> bool {
-        position != Position {x: 0, y: - 1} && position.x >= 0 && position.x < 3 && position.y >= - 1 && position.y < 3
-    }
-}
-
-fn position_to_moves(current_position: &mut Position, next_positions: &[Position]) -> Vec<ArrowKey> {
-    let mut moves = Vec::new();
-    
-    while let Some(next_position) = next_positions.iter().next() {
-        let delta = *next_position - *current_position;
-
-        let x_move = if delta.x < 0 {
-            ArrowKey::Left
-        } else {
-            ArrowKey::Right
-        }; 
-
-        if delta.x < 0 {
-            moves.extend(std::iter::repeat(ArrowKey::Left).take(delta.x.abs()))
-        }
-
-        moves.
-
-    }
-
-    todo!()
 }
 
 fn numeric_code(keys: &[NumericKey]) -> i64 {
@@ -111,61 +146,49 @@ fn numeric_code(keys: &[NumericKey]) -> i64 {
         .sum()
 }
 
-fn numeric_key_motion(current_key: &mut NumericKey, keys: &[NumericKey]) -> Position {
-    let mut total_motion = Position { x: 0, y: 0 };
-
-    while let Some(key) = keys.into_iter().next() {
-        let key_position = key.position();
-
-        total_motion = total_motion + key_position - current_key.position();
-        *current_key = *key;
-    }
-
-    total_motion
-}
-
-fn position_length_sequence(motion: Position) -> i64 {
-    1 + motion.x.abs() + motion.y.abs() 
-}
-
-fn motion_length_to_next_motion(motion: Position) -> Position {
-    // motion is the number of time the robot 
-}
-
-// We can describe the point a robot needs to be at with a list of points. The
-// sum of the Manhattan distance between these points give us the answer we
-// want, as far as the length of the sequence to press is concerned.
-//
-// For instance, if the original robot (A) needs to type 02A, the sequence of
-// moves that robot needs to do is <A^A>vA, which is of length 7. Note that this
-// is the same as 1 + 1 + 2 (distances between A and 0, 0 and 2 and 2 and A). To
-// that, we need to add 3 for the three times we had to press A.
-//
-// If we now need a robot to make that robot type these keys. It will have to go 
-// <vvA>>^A
-//
-// When another robot (B) needs to make the original robot (A) perform that
-// sequence of moves, it needs to 
-
 #[derive(Clone, Copy)]
 enum ArrowKey {
     A,
-    Up,
-    Down,
-    Left,
-    Right,
+    Direction(Direction),
 }
 
 impl ArrowKey {
     fn position(self) -> Position {
         match self {
-            ArrowKey::A => Position { x: 1, y: 1 },
-            ArrowKey::Up => Position { x: 0, y: 1 },
-            ArrowKey::Down => Position { x: 0, y: 0 },
-            ArrowKey::Left => Position { x: -1, y: 0 },
-            ArrowKey::Right => Position { x: 1, y: 0 },
+            ArrowKey::A => ARROW_KEYPAD[0],
+            ArrowKey::Direction(Direction::Up) => ARROW_KEYPAD[1],
+            ArrowKey::Direction(Direction::Right) => ARROW_KEYPAD[2],
+            ArrowKey::Direction(Direction::Down) => ARROW_KEYPAD[3],
+            ArrowKey::Direction(Direction::Left) => ARROW_KEYPAD[4],
         }
     }
+
+    fn display(self) -> char {
+        match self {
+            ArrowKey::A => 'A',
+            ArrowKey::Direction(Direction::Up) => '^',
+            ArrowKey::Direction(Direction::Right) => '>',
+            ArrowKey::Direction(Direction::Down) => 'v',
+            ArrowKey::Direction(Direction::Left) => '<',
+        }
+    }
+}
+
+fn compute_door_solution(code: &[NumericKey], robots_involved: usize) -> i64 {
+    let pad_positions = code.iter().map(|key| key.position()).collect::<Vec<_>>();
+
+    let mut path = NUMERIC_BOARD.make_path(&mut NumericKey::A.position(), &pad_positions);
+
+    for _robot_id in 1..robots_involved {
+        let positions = path
+            .into_iter()
+            .map(|key| key.position())
+            .collect::<Vec<_>>();
+        path = ARROW_BOARD.make_path(&mut ArrowKey::A.position(), &positions);
+        println!("{} {}", _robot_id, path.len());
+    }
+
+    numeric_code(&code) * path.len() as i64
 }
 
 pub struct Day21 {
@@ -192,10 +215,20 @@ impl Puzzle for Day21 {
     }
 
     fn part1(self) -> Option<Self::Output> {
-        None
+        Some(
+            self.door_codes
+                .into_iter()
+                .map(|code| compute_door_solution(&code, 3))
+                .sum(),
+        )
     }
 
     fn part2(self) -> Option<Self::Output> {
-        None
+        Some(
+            self.door_codes
+                .into_iter()
+                .map(|code| compute_door_solution(&code, 25))
+                .sum(),
+        )
     }
 }
