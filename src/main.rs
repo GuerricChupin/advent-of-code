@@ -23,6 +23,7 @@ mod aoc24 {
     pub mod day20;
     pub mod day21;
     pub mod day22;
+    pub mod day23;
     pub mod day24;
     pub mod day25;
 }
@@ -155,6 +156,7 @@ make_puzzle_runner![
     (2024, 20, aoc24::day20::Day20),
     (2024, 21, aoc24::day21::Day21),
     (2024, 22, aoc24::day22::Day22),
+    (2024, 23, aoc24::day23::Day23),
     (2024, 24, aoc24::day24::Day24),
     (2024, 25, aoc24::day25::Day25)
 ];
