@@ -11,15 +11,6 @@ enum Register {
     Z,
 }
 
-impl Register {
-    fn _is_input(self) -> bool {
-        match self {
-            Register::X | Register::Y => true,
-            Register::Z => false,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum Wire {
     Numbered(Register, u32),
@@ -168,24 +159,6 @@ impl Puzzle for Day24 {
     }
 
     fn part2(self) -> Option<Self::Output> {
-        let cfg = z3::Config::new();
-        let ctx = z3::Context::new(&cfg);
-        let _solver = z3::Solver::new(&ctx);
-
-        let input_bit_count = self
-            .inputs
-            .keys()
-            .chain(self.connections.keys())
-            .filter_map(|wire| match wire {
-                Wire::Numbered(_, bit) => Some(*bit),
-                Wire::Named(_) => None,
-            })
-            .max()?;
-
-        let _output_bit_count = input_bit_count + 1;
-
-        // z3_model(&ctx, &solver, &self.connections, input_bit_count);
-
         None
     }
 }
