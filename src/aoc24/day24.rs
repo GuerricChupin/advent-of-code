@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use regex::Regex;
 
@@ -12,7 +12,7 @@ enum Register {
 }
 
 impl Register {
-    fn _is_input(self) -> bool {
+    fn is_input(self) -> bool {
         match self {
             Register::X | Register::Y => true,
             Register::Z => false,
@@ -46,7 +46,7 @@ impl Wire {
         }
     }
 
-    fn _to_prefix(&self) -> String {
+    fn to_prefix(&self) -> String {
         match self {
             Wire::Numbered(register, bit) => format!("{:?}{:02}", register, bit),
             Wire::Named(name) => name.iter().collect(),
@@ -110,6 +110,64 @@ fn get_zs(rules: &HashMap<Wire, Connection>, known_values: &mut HashMap<Wire, bo
     result
 }
 
+// fn foo(input_bit_count: u32) -> () {
+//     let mut current_carry = None;
+
+//     for bit in (0..input_bit_count).rev() {
+//         let output_wire = Wire::Numbered(Register::Z, bit);
+
+//         let first_sum = Connection {
+//             fst: Wire::Numbered(Register::X, bit),
+//             snd: Wire::Numbered(Register::Y, bit),
+//             gate: Gate::Xor,
+//         };
+//         let this_carry = Connection {
+//             fst: Wire::Numbered(Register::X, bit),
+//             snd: Wire::Numbered(Register::Y, bit),
+//             gate: Gate::Xor,
+//         };
+
+//         let final_sum = if let Some(carry) = current_carry {
+//             Some(Connection {
+//                 fst: _first_sum_wire,
+//                 snd: carry,
+//                 gate: Gate::Xor,
+//             })
+//         } else {
+//             None
+//         };
+
+//         let carry_out_part_1 = Connection {
+//             fst: Wire::Numbered(Register::X, bit),
+
+//         }
+//     }
+// }
+
+// fn half_adder<'c>(
+//     ctx: &'c z3::Context,
+//     a: &z3::ast::Bool<'c>,
+//     b: &z3::ast::Bool<'c>,
+// ) -> (z3::ast::Bool<'c>, z3::ast::Bool<'c>) {
+//     let sum = a.xor(b);
+//     let carry = z3::ast::Bool::and(ctx, &[a, b]);
+
+//     (sum, carry)
+// }
+
+// fn full_adder<'c>(
+//     ctx: &'c z3::Context,
+//     a: &z3::ast::Bool<'c>,
+//     b: &z3::ast::Bool<'c>,
+//     carry: &z3::ast::Bool<'c>,
+// ) -> (z3::ast::Bool<'c>, z3::ast::Bool<'c>) {
+//     let (s_1, c_1) = half_adder(ctx, a, b);
+//     let (sum, c_2) = half_adder(ctx, carry, &s_1);
+//     let carry = z3::ast::Bool::or(ctx, &[&c_1, &c_2]);
+
+//     (sum, carry)
+// }
+
 pub struct Day24 {
     inputs: HashMap<Wire, bool>,
     connections: HashMap<Wire, Connection>,
@@ -168,24 +226,6 @@ impl Puzzle for Day24 {
     }
 
     fn part2(self) -> Option<Self::Output> {
-        let cfg = z3::Config::new();
-        let ctx = z3::Context::new(&cfg);
-        let _solver = z3::Solver::new(&ctx);
-
-        let input_bit_count = self
-            .inputs
-            .keys()
-            .chain(self.connections.keys())
-            .filter_map(|wire| match wire {
-                Wire::Numbered(_, bit) => Some(*bit),
-                Wire::Named(_) => None,
-            })
-            .max()?;
-
-        let _output_bit_count = input_bit_count + 1;
-
-        // z3_model(&ctx, &solver, &self.connections, input_bit_count);
-
         None
     }
 }
