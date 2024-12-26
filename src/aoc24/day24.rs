@@ -11,7 +11,7 @@ enum Register {
     Z,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum Wire {
     Numbered(Register, u32),
     Named([char; 3]),
@@ -37,24 +37,47 @@ impl Wire {
         }
     }
 
-    fn _to_prefix(&self) -> String {
+    fn show(&self) -> String {
         match self {
-            Wire::Numbered(register, bit) => format!("{:?}{:02}", register, bit),
+            Wire::Numbered(register, bit) => {
+                let register = match register {
+                    Register::X => 'x',
+                    Register::Y => 'y',
+                    Register::Z => 'z',
+                };
+
+                format!("{}{:02}", register, bit)
+            }
             Wire::Named(name) => name.iter().collect(),
         }
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Gate {
     And,
     Xor,
     Or,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct Connection {
     fst: Wire,
     snd: Wire,
     gate: Gate,
+}
+
+impl Connection {
+    fn new(fst: Wire, snd: Wire, gate: Gate) -> Self {
+        let new_fst = fst.min(snd);
+        let new_snd = fst.max(snd);
+
+        Connection {
+            fst: new_fst,
+            snd: new_snd,
+            gate,
+        }
+    }
 }
 
 fn value_of(
@@ -101,6 +124,94 @@ fn get_zs(rules: &HashMap<Wire, Connection>, known_values: &mut HashMap<Wire, bo
     result
 }
 
+fn is_input_of_gate(
+    connections: &HashMap<Wire, Connection>,
+    output: Wire,
+    gate_type: Gate,
+) -> bool {
+    connections
+        .iter()
+        .filter(|(_, Connection { fst, snd, gate })| {
+            gate == &gate_type && (fst == &output || snd == &output)
+        })
+        .next()
+        .is_some()
+}
+
+fn valid_xor_gate(
+    connections: &HashMap<Wire, Connection>,
+    fst: Wire,
+    snd: Wire,
+    output: Wire,
+) -> bool {
+    match (fst, snd, output) {
+        (Wire::Numbered(_, _), Wire::Numbered(_, _), Wire::Named(_)) => {
+            is_input_of_gate(connections, output, Gate::Xor)
+        }
+        (
+            Wire::Numbered(Register::X, 0),
+            Wire::Numbered(Register::Y, 0),
+            Wire::Numbered(Register::Z, 0),
+        )
+        | (Wire::Named(_), Wire::Named(_), Wire::Numbered(_, _)) => true,
+        _ => false,
+    }
+}
+
+fn valid_and_gate(
+    connections: &HashMap<Wire, Connection>,
+    fst: Wire,
+    snd: Wire,
+    output: Wire,
+) -> bool {
+    match (fst, snd, output) {
+        (Wire::Numbered(Register::X, 0), Wire::Numbered(Register::Y, 0), Wire::Named(_)) => true,
+        (Wire::Numbered(_, _), Wire::Numbered(_, _), Wire::Named(_))
+        | (Wire::Named(_), Wire::Named(_), Wire::Named(_)) => {
+            is_input_of_gate(connections, output, Gate::Or)
+        }
+        _ => false,
+    }
+}
+
+fn valid_or_gate(
+    input_bit_count: u32,
+    fst: Wire,
+    snd: Wire,
+    output: Wire,
+) -> bool {
+    match (fst, snd, output) {
+        (Wire::Named(_), Wire::Named(_), Wire::Named(_)) => true,
+        (Wire::Named(_), Wire::Named(_), Wire::Numbered(Register::Z, bit)) => {
+            input_bit_count + 1 == bit
+        }
+        _ => false,
+    }
+}
+
+fn is_valid_gate(
+    connections: &HashMap<Wire, Connection>,
+    input_bit_count: u32,
+    Connection { fst, snd, gate }: &Connection,
+    output: Wire,
+) -> bool {
+    match gate {
+        Gate::And => valid_and_gate(connections, *fst, *snd, output),
+        Gate::Xor => valid_xor_gate(connections, *fst, *snd, output),
+        Gate::Or => valid_or_gate(input_bit_count, *fst, *snd, output),
+    }
+}
+
+fn extract_odd_gates(input_bit_count: u32, connections: &HashMap<Wire, Connection>) -> Vec<Wire> {
+    connections
+        .into_iter()
+        .filter(|(wire, connection)| {
+            !is_valid_gate(connections, input_bit_count, connection, **wire)
+        })
+        .map(|(wire, _)| *wire)
+        .collect()
+}
+
 pub struct Day24 {
     inputs: HashMap<Wire, bool>,
     connections: HashMap<Wire, Connection>,
@@ -142,7 +253,7 @@ impl Puzzle for Day24 {
                     unknown => panic!("Not a gate {unknown}"),
                 };
 
-                Some((output, Connection { fst, snd, gate }))
+                Some((output, Connection::new(fst, snd, gate)))
             })
             .collect::<Option<HashMap<_, _>>>()?;
 
@@ -159,6 +270,25 @@ impl Puzzle for Day24 {
     }
 
     fn part2(self) -> Option<Self::Output> {
-        None
+        // The solution for this part is taken from
+        // https://www.reddit.com/r/adventofcode/comments/1hla5ql/comment/m3kws15/.
+        // I find it very unsatisfactory but it works :/
+        let input_bit_count = self
+            .inputs
+            .into_iter()
+            .filter_map(|(register, _)| match register {
+                Wire::Numbered(_, bit) => Some(bit),
+                Wire::Named(_) => None,
+            })
+            .max()
+            .unwrap();
+
+        let odd_gates = extract_odd_gates(input_bit_count, &self.connections);
+        let mut odd_gates = odd_gates
+            .into_iter()
+            .map(|wire| wire.show())
+            .collect::<Vec<_>>();
+        odd_gates.sort();
+        Some(odd_gates.join(","))
     }
 }
