@@ -38,12 +38,20 @@ fn make_link_set(links: &[[Computer; 2]]) -> HashMap<Computer, BTreeSet<Computer
     set
 }
 
-fn can_insert_in_set(direct_links: &HashMap<Computer, BTreeSet<Computer>>, set: &BTreeSet<Computer>, computer: Computer) -> bool {
+fn can_insert_in_set(
+    direct_links: &HashMap<Computer, BTreeSet<Computer>>,
+    set: &BTreeSet<Computer>,
+    computer: Computer,
+) -> bool {
     !set.contains(&computer) /* The computer must no already be in the set */
-    && set.iter().all(|other| direct_links.get(other).map(|direct| direct.contains(&computer)).unwrap_or(false)) /* All members of the set must be directly connected to that computer */
+    && set.iter().all(|other| direct_links.get(other).map(|direct| direct.contains(&computer)).unwrap_or(false))
+    /* All members of the set must be directly connected to that computer */
 }
 
-fn expand_sets(direct_links: &HashMap<Computer, BTreeSet<Computer>>, sets: &BTreeSet<BTreeSet<Computer>>) -> BTreeSet<BTreeSet<Computer>> {
+fn expand_sets(
+    direct_links: &HashMap<Computer, BTreeSet<Computer>>,
+    sets: &BTreeSet<BTreeSet<Computer>>,
+) -> BTreeSet<BTreeSet<Computer>> {
     let mut new_sets = BTreeSet::new();
 
     for n_set in sets.iter() {
@@ -63,10 +71,16 @@ fn expand_sets(direct_links: &HashMap<Computer, BTreeSet<Computer>>, sets: &BTre
     new_sets
 }
 
-fn makes_sets_of_size(direct_links: &HashMap<Computer, BTreeSet<Computer>>, size: usize) -> BTreeSet<BTreeSet<Computer>> {
+fn makes_sets_of_size(
+    direct_links: &HashMap<Computer, BTreeSet<Computer>>,
+    size: usize,
+) -> BTreeSet<BTreeSet<Computer>> {
     match size {
         0 => BTreeSet::new(),
-        1 => direct_links.keys().map(|computer| BTreeSet::from([*computer])).collect(),
+        1 => direct_links
+            .keys()
+            .map(|computer| BTreeSet::from([*computer]))
+            .collect(),
         n => {
             let sets_of_nm1 = makes_sets_of_size(direct_links, n - 1);
             expand_sets(direct_links, &sets_of_nm1)
@@ -81,7 +95,7 @@ fn find_largest_connected_set(links: &HashMap<Computer, BTreeSet<Computer>>) -> 
         let next_set = expand_sets(links, &current_set);
 
         if next_set.is_empty() {
-            return current_set.pop_first().unwrap()
+            return current_set.pop_first().unwrap();
         }
 
         current_set = next_set;
@@ -142,7 +156,11 @@ impl Puzzle for Day23 {
 
         let largest_set = find_largest_connected_set(&link_set);
 
-        let password = largest_set.into_iter().map(|computer| computer.name()).collect::<Vec<_>>().join(",");
+        let password = largest_set
+            .into_iter()
+            .map(|computer| computer.name())
+            .collect::<Vec<_>>()
+            .join(",");
 
         Some(password)
     }
