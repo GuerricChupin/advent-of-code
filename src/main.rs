@@ -1,5 +1,10 @@
 pub mod position;
 pub mod puzzle;
+
+mod aoc22 {
+    pub mod day01;
+}
+
 mod aoc24 {
     pub mod day01;
     pub mod day02;
@@ -134,6 +139,8 @@ macro_rules! make_puzzle_runner {
 
 // Defines the puzzle_runner function
 make_puzzle_runner![
+    (2022, 01, aoc22::day01::Day01),
+
     (2024, 01, aoc24::day01::Day01),
     (2024, 02, aoc24::day02::Day02),
     (2024, 03, aoc24::day03::Day03),
